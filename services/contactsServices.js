@@ -1,7 +1,7 @@
 import Contact from "../models/Contact.js";
 
 export async function listContacts(filter = {}, fields = []) {
-  return await Contact.find(filter, fields);  
+  return await Contact.find(filter, fields);
 }
 
 export async function getContactById(id) {
@@ -22,7 +22,6 @@ export async function updateContact(id, name, email, phone) {
   const result = await Contact.findByIdAndUpdate(id, { name, email, phone });
   return result;
 }
-
 
 export async function updateStatusContact(id, favorite) {
   const result = await Contact.findByIdAndUpdate(id, { favorite });
