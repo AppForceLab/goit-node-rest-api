@@ -3,7 +3,7 @@ import HttpError from "../helpers/HttpError.js";
 import ctrlWraper from "../decorators/ctrlWrapper.js";
 
 const getAllContacts = async (req, res) => {
-  const contacts = await contactsServices.listContacts();
+  const contacts = await contactsServices.listContacts({},['-createdAt','-updatedAt']);
   res.json(contacts);
 };
 
@@ -48,10 +48,23 @@ const updateContact = async (req, res) => {
   }
 };
 
+const updateStatusContact = async (req, res) => {
+  const { id } = req.params;
+  const { favorite } = req.body;
+  const updatedContact = await contactsServices.updateStatusContact(id, favorite);
+  if (!updatedContact) {
+    throw HttpError(404);
+  } else {
+    res.json(updatedContact);
+  }
+};
+
+
 export default {
   getAllContacts: ctrlWraper(getAllContacts),
   getOneContact: ctrlWraper(getOneContact),
   deleteContact: ctrlWraper(deleteContact),
   createContact: ctrlWraper(createContact),
   updateContact: ctrlWraper(updateContact),
+  updateStatusContact: ctrlWraper(updateStatusContact),
 };
