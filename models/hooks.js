@@ -1,5 +1,9 @@
 export const handleSaveErrors = (err, data, next) => {
-  err.status = 400;
+  if (err.code === 11000) {
+    err.status = 409;
+  } else {
+    err.status = 400;
+  }
   next();
 }
 
