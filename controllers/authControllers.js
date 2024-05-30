@@ -1,6 +1,11 @@
 import * as authServices from "../services/authServices.js";
 import HttpError from "../helpers/HttpError.js";
 import ctrlWraper from "../decorators/ctrlWrapper.js";
+import emailToFilename from "../helpers/emailToFilename.js";
+import gravatar from "gravatar";
+import path from "path";
+import fs from "fs/promises";
+import Jimp from "jimp";
 
 const signup = async (req, res) => {
   const { email, password } = req.body;
@@ -8,12 +13,18 @@ const signup = async (req, res) => {
   if (user) {
     throw HttpError(409, "Email in use");
   }
-  const newUser = await authServices.signup(email, password);
 
+  const avatarURL = gravatar.url(email, {
+    s: 100,
+    r: "x",
+    d: "retro",
+  });
+  const newUser = await authServices.signup(email, password, avatarURL);
   res.status(201).json({
     user: {
       email: newUser.email,
       subscription: newUser.subscription,
+      avatarURL: avatarURL,
     },
   });
 };
@@ -31,16 +42,16 @@ const signin = async (req, res) => {
       subscription: user.subscription,
     },
   });
-}
+};
 
 const logout = async (req, res) => {
-  const  user  = await authServices.findUserById(req.user._id.toString());
+  const user = await authServices.findUserById(req.user._id.toString());
   if (user.token != req.user.token) {
     throw HttpError(401, "Unauthorized");
   }
   await authServices.logout(user);
   res.status(204).json({});
-}
+};
 
 const getCurrentUser = async (req, res) => {
   const user = await authServices.findUserById(req.user._id.toString());
@@ -48,15 +59,52 @@ const getCurrentUser = async (req, res) => {
     throw HttpError(401, "Unauthorized");
   }
   res.json({
-      email: user.email,
-      subscription: user.subscription
-    },
-  );
-}
+    email: user.email,
+    subscription: user.subscription,
+  });
+};
+
+const updateAvatar = async (req, res, next) => {
+  const { _id: owner } = req.user;
+  const user = await authServices.findUserById(owner);
+  if (user.token != req.user.token) {
+    throw HttpError(401, "Not authorized");
+  }
+
+  if (!req.file) {
+    next(HttpError(400, "No file received"));
+  } else {
+    const avatarsPath = path.resolve("public", "avatars");
+    const { path: oldPath, filename } = req.file;
+    const extension = path.extname(filename);
+    const newFileName = emailToFilename(user.email) + extension;
+    const newPath = path.join(avatarsPath, newFileName);
+
+    Jimp.read(oldPath)
+      .then((image) => {
+        image.resize(250, 250);
+        image.write(newPath);
+      })
+      .catch((err) => {
+        throw HttpError(500);
+      });
+
+    await fs.unlink(oldPath);
+
+    const avatar = path.join("avatars", newFileName);
+    user.avatarURL = avatar;
+    await user.save();
+
+    res.json({
+      avatarURL: user.avatarURL,
+    });
+  }
+};
 
 export default {
   signup: ctrlWraper(signup),
   signin: ctrlWraper(signin),
   logout: ctrlWraper(logout),
   getCurrentUser: ctrlWraper(getCurrentUser),
+  updateAvatar: ctrlWraper(updateAvatar),
 };

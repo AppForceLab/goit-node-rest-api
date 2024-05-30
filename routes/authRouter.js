@@ -1,9 +1,9 @@
 import express from "express";
 import ctrlUser from "../controllers/authControllers.js";
 import isEmptyBody from "../middlewares/isEmptyBody.js";
-import isValidId from "../middlewares/isValidId.js";
 import validateBody from "../decorators/validateBody.js";
 import authenticate from "../middlewares/authenticate.js";
+import upload from "../middlewares/upload.js";
 
 const authRouter = express.Router();
 
@@ -13,5 +13,8 @@ authRouter.post("/register", isEmptyBody, validateBody(authSignupSchema), ctrlUs
 authRouter.post("/login", isEmptyBody, validateBody(authSigninSchema), ctrlUser.signin);
 authRouter.post("/logout", authenticate, ctrlUser.logout);
 authRouter.get("/current", authenticate, ctrlUser.getCurrentUser);
+authRouter.patch("/avatars", upload.single("avatar"), authenticate, ctrlUser.updateAvatar);
+
+
 
 export default authRouter;
