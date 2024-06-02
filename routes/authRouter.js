@@ -7,14 +7,38 @@ import upload from "../middlewares/upload.js";
 
 const authRouter = express.Router();
 
-import { authSignupSchema, authSigninSchema  } from "../schemas/authSchemas.js";
+import {
+  authSignupSchema,
+  authSigninSchema,
+  tokenRequestSchema,
+} from "../schemas/authSchemas.js";
 
-authRouter.post("/register", isEmptyBody, validateBody(authSignupSchema), ctrlUser.signup);
-authRouter.post("/login", isEmptyBody, validateBody(authSigninSchema), ctrlUser.signin);
+authRouter.post(
+  "/register",
+  isEmptyBody,
+  validateBody(authSignupSchema),
+  ctrlUser.signup
+);
+authRouter.post(
+  "/login",
+  isEmptyBody,
+  validateBody(authSigninSchema),
+  ctrlUser.signin
+);
 authRouter.post("/logout", authenticate, ctrlUser.logout);
 authRouter.get("/current", authenticate, ctrlUser.getCurrentUser);
-authRouter.patch("/avatars", upload.single("avatar"), authenticate, ctrlUser.updateAvatar);
-
-
+authRouter.patch(
+  "/avatars",
+  upload.single("avatar"),
+  authenticate,
+  ctrlUser.updateAvatar
+);
+authRouter.get("/verify/:verificationToken", ctrlUser.verifyUser);
+authRouter.post(
+  "/verify",
+  isEmptyBody,
+  validateBody(tokenRequestSchema),
+  ctrlUser.verifyUserRequest
+);
 
 export default authRouter;

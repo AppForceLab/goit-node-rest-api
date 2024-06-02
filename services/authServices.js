@@ -14,10 +14,15 @@ export const findUserById = async (id) => {
   return result;
 };
 
-export const signup = async (email, pass, avatarURL) => {
+export const signup = async (email, pass, avatarURL, verificationToken) => {
   const password = await bcrypt.hash(pass, 10);
 
-  const user = await User.create({ email, password, avatarURL });
+  const user = await User.create({
+    email,
+    password,
+    avatarURL,
+    verificationToken,
+  });
 
   return user;
 };
@@ -46,7 +51,6 @@ export const signin = async (email, pass) => {
 
   return user;
 };
-
 
 export const logout = async (user) => {
   user.token = null;
